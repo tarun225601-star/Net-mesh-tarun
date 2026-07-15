@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NetMesh</string>
+
+    <!-- ── Replace this with your actual signaling server WebSocket URL ── -->
+    <!-- e.g. wss://signal.yourdomain.com/ws or ws://192.168.1.5:8080/ws  -->
+    <string name="signaling_server_url">wss://your-signaling-server.example.com/ws</string>
+
+    <!-- UI strings -->
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_error">Error — tap Connect to retry</string>
+
+    <!-- Notification strings -->
+    <string name="notif_channel_id">netmesh_vpn</string>
+    <string name="notif_channel_name">VPN Tunnel</string>
+    <string name="notif_title">NetMesh VPN Active</string>
+    <string name="notif_text">Routing all traffic through WebRTC tunnel</string>
+    <string name="notif_action_disconnect">Disconnect</string>
+</resources>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D0D0D"
+    android:padding="24dp">
+
+    <!-- Logo / app title -->
+    <TextView
+        android:id="@+id/tvAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NetMesh"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        android:letterSpacing="0.05"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="60dp" />
+
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WebRTC VPN Tunnel"
+        android:textSize="14sp"
+        android:textColor="#88FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/tvAppName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp" />
+
+    <!-- Status indicator dot + text -->
+    <View
+        android:id="@+id/viewStatusDot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:background="@drawable/shape_status_dot"
+        android:backgroundTint="@color/red_disconnected"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintEnd_toStartOf="@id/tvStatus"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="8dp" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/status_disconnected"
+        android:textSize="16sp"
+        android:textColor="#CCFFFFFF"
+        app:layout_constraintTop_toTopOf="@id/viewStatusDot"
+        app:layout_constraintBottom_toBottomOf="@id/viewStatusDot"
+        app:layout_constraintStart_toEndOf="@id/viewStatusDot"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Stats row (bytes in / out) — shown only when connected -->
+    <LinearLayout
+        android:id="@+id/layoutStats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/viewStatusDot"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/tvBytesDown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 B"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFFFF" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↓ Download"
+                android:textSize="12sp"
+                android:textColor="#88FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/tvBytesUp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 B"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFFFF" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↑ Upload"
+                android:textSize="12sp"
+                android:textColor="#88FFFFFF" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Connect / Disconnect big button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConnect"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:text="@string/connect"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        app:cornerRadius="100dp"
+        app:backgroundTint="#FF6200EE"
+        app:layout_constraintBottom_toTopOf="@id/tvServerInfo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="40dp" />
+
+    <!-- Server info footer -->
+    <TextView
+        android:id="@+id/tvServerInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Signal server: not configured"
+        android:textSize="11sp"
+        android:textColor="#44FFFFFF"
+        android:gravity="center"
+        android:fontFamily="monospace"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
