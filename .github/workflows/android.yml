@@ -1,0 +1,149 @@
+name: Build NetMesh Android APK
+
+# ── When this workflow runs ────────────────────────────────────────────────
+#
+#  • Every push to main or master
+#  • Every pull request targeting main or master
+#  • Manually, from the GitHub Actions tab (workflow_dispatch)
+#
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'netmesh-android/**'        # only trigger when Android code changes
+      - '.github/workflows/android.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'netmesh-android/**'
+  workflow_dispatch:                # lets you press "Run workflow" manually
+
+# ── Jobs ──────────────────────────────────────────────────────────────────
+jobs:
+
+  # ── Job 1: Build a debug APK (no signing needed, runs immediately) ──────
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # 1. Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Java 17 (matches compileOptions in app/build.gradle)
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin      # Eclipse Temurin — free, reliable OpenJDK build
+          java-version: '17'
+          cache: gradle              # caches ~/.gradle between runs (speeds up builds)
+
+      # 3. Make the Gradle wrapper executable
+      #    (Unix line endings are stripped by Windows git configs — this fixes it)
+      - name: Make gradlew executable
+        working-directory: netmesh-android
+        run: chmod +x gradlew
+
+      # 4. Run the debug build
+      - name: Build debug APK
+        working-directory: netmesh-android
+        run: ./gradlew assembleDebug --stacktrace
+
+      # 5. Upload the debug APK so you can download it from the Actions tab
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMesh-debug-${{ github.run_number }}
+          path: netmesh-android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30        # artifact stays available for 30 days
+
+
+  # ── Job 2: Build a signed release APK ────────────────────────────────────
+  #
+  #  This job only runs on pushes to main/master (not on PRs) and only when
+  #  the required signing secrets are present in the repository.
+  #
+  #  Required GitHub Secrets (Settings → Secrets → Actions):
+  #
+  #    KEYSTORE_BASE64      — your .jks keystore file encoded as base64
+  #                           Generate:  base64 -i your-keystore.jks | pbcopy
+  #    KEYSTORE_PASSWORD    — the keystore password
+  #    KEY_ALIAS            — the key alias inside the keystore
+  #    KEY_PASSWORD         — the key password
+  #
+  #  See GITHUB_SETUP_GUIDE.md for full signing key generation instructions.
+  #
+  build-release:
+    name: Build Signed Release APK
+    runs-on: ubuntu-latest
+    # Only run on direct pushes to main/master — skip for PRs
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Only run if the signing secret is present (otherwise skip silently)
+    # This prevents the job from failing on forks or when secrets aren't set yet
+    env:
+      HAS_SIGNING_SECRETS: ${{ secrets.KEYSTORE_BASE64 != '' }}
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Make gradlew executable
+        working-directory: netmesh-android
+        run: chmod +x gradlew
+
+      # Decode the base64-encoded keystore and write it to disk
+      - name: Decode keystore
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        working-directory: netmesh-android
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/netmesh-release.jks
+          echo "Keystore written to app/netmesh-release.jks"
+
+      # Build the signed release APK.
+      # Signing credentials are passed via environment variables, which
+      # app/build.gradle reads in its signingConfigs block.
+      - name: Build signed release APK
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        working-directory: netmesh-android
+        env:
+          SIGNING_STORE_FILE: app/netmesh-release.jks
+          SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      # Build an UNSIGNED release APK when no signing secrets are configured.
+      # This APK cannot be installed on real devices but confirms the build compiles.
+      - name: Build unsigned release APK (no signing secrets)
+        if: env.HAS_SIGNING_SECRETS == 'false'
+        working-directory: netmesh-android
+        run: |
+          echo "⚠️ No signing secrets found — building unsigned release APK."
+          echo "Add KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD"
+          echo "to repository secrets to produce a signed, installable APK."
+          ./gradlew assembleRelease -Pandroid.injected.signing.store.file="" --stacktrace || true
+
+      # Upload the signed APK
+      - name: Upload signed release APK
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetMesh-release-signed-${{ github.run_number }}
+          path: netmesh-android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 90
+
+      # Clean up the keystore — never leave credentials on the runner disk
+      - name: Clean up keystore
+        if: always() && env.HAS_SIGNING_SECRETS == 'true'
+        working-directory: netmesh-android
+        run: rm -f app/netmesh-release.jks

@@ -28,10 +28,35 @@ android {
         jvmTarget = "17"
     }
 
+    // ── Signing config — reads from environment variables set by GitHub Actions ──
+    // Locally, Android Studio signs debug builds automatically.
+    // For release builds locally, set these environment variables or use the
+    // "Generate Signed APK" wizard in Android Studio instead.
+    signingConfigs {
+        release {
+            val storeFile     = System.getenv("SIGNING_STORE_FILE")
+            val storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+            val keyAlias      = System.getenv("SIGNING_KEY_ALIAS")
+            val keyPassword   = System.getenv("SIGNING_KEY_PASSWORD")
+
+            if (storeFile != null && storeFile.isNotEmpty()) {
+                this.storeFile     = file(storeFile)
+                this.storePassword = storePassword
+                this.keyAlias      = keyAlias
+                this.keyPassword   = keyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Use the release signing config when env vars are present (CI),
+            // otherwise fall back to debug signing (local builds)
+            val hasSigningEnv = System.getenv("SIGNING_STORE_FILE")?.isNotEmpty() == true
+            signingConfig = if (hasSigningEnv) signingConfigs.getByName("release")
+                            else signingConfigs.getByName("debug")
         }
     }
 }
