@@ -3,18 +3,12 @@ name: Build NetMesh Android APK
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - 'netmesh-android/**'
-      - '.github/workflows/android.yml'
   pull_request:
     branches: [ main, master ]
-    paths:
-      - 'netmesh-android/**'
   workflow_dispatch:
 
 jobs:
 
-  # ── Job 1: Debug APK — no signing needed, runs immediately ───────────────
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
@@ -30,14 +24,17 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      # Fix executable bit — both chmod (runtime) and git index (repo)
-      - name: Make gradlew executable
+      # Triple-safe permission fix:
+      #  1. chmod +x at runtime
+      #  2. git update-index so the repo itself marks it executable
+      #  3. sh gradlew instead of ./gradlew — works even with bad line endings
+      - name: Fix gradlew permissions
         working-directory: netmesh-android
         run: |
           chmod +x gradlew
           git update-index --chmod=+x gradlew || true
+          ls -la gradlew
 
-      # Use 'sh gradlew' — works even if the shebang line has Windows line endings
       - name: Build debug APK
         working-directory: netmesh-android
         run: sh gradlew assembleDebug --stacktrace
@@ -49,15 +46,6 @@ jobs:
           path: netmesh-android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-
-  # ── Job 2: Signed release APK — requires GitHub Secrets ─────────────────
-  #
-  #  Add these four secrets in: Settings → Secrets → Actions
-  #    KEYSTORE_BASE64      base64-encoded .jks keystore file
-  #    KEYSTORE_PASSWORD    keystore password
-  #    KEY_ALIAS            key alias (e.g. netmesh-key)
-  #    KEY_PASSWORD         key password
-  #
   build-release:
     name: Build Signed Release APK
     runs-on: ubuntu-latest
@@ -74,7 +62,7 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Make gradlew executable
+      - name: Fix gradlew permissions
         working-directory: netmesh-android
         run: |
           chmod +x gradlew
@@ -95,12 +83,10 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: sh gradlew assembleRelease --stacktrace
 
-      - name: Build unsigned release APK (no secrets configured)
+      - name: Build unsigned release (no secrets)
         if: ${{ secrets.KEYSTORE_BASE64 == '' }}
         working-directory: netmesh-android
-        run: |
-          echo "No signing secrets found — building unsigned release for compile check only."
-          sh gradlew assembleRelease --stacktrace || true
+        run: sh gradlew assembleRelease --stacktrace || true
 
       - name: Upload signed release APK
         if: ${{ secrets.KEYSTORE_BASE64 != '' }}
@@ -110,7 +96,6 @@ jobs:
           path: netmesh-android/app/build/outputs/apk/release/app-release.apk
           retention-days: 90
 
-      # Always clean up the keystore — never leave credentials on the runner
       - name: Clean up keystore
         if: always()
         working-directory: netmesh-android
