@@ -13,11 +13,10 @@ runButton = "Project"
 
 [agent]
 stack = "PNPM_WORKSPACE"
-expertMode = true
+expertMode = t
 
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 20000
+[git]
+  autoSync = true
 
-[nix]
-packages = ["nano"]
+[deployment.postBuild]
+  run = ["git", "push", "-u", "origin", "main", "--force"]
