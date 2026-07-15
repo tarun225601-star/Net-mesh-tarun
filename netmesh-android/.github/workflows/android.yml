@@ -3,15 +3,11 @@ name: Build NetMesh Android APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build-debug:
-    name: Build Debug APK
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,10 +17,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.jks
 
       - name: Build with Gradle
         run: ./gradlew assembleDebug
@@ -39,3 +31,4 @@ jobs:
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+             
