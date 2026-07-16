@@ -199,7 +199,7 @@ class NetMeshVpnService : VpnService() {
                 Log.i(TAG, "DataChannel OPEN — VPN tunnel active")
                 // Start bridging TUN ↔ DataChannel
                 val tun = tunInterface ?: return@WebRtcManager
-                tunForwarder = TunPacketForwarder(tun, manager) { down, up ->
+                tunForwarder = TunPacketForwarder(tun, webRtcManager!!) { down, up ->
                     broadcastStats(down, up)
                 }
                 tunForwarder?.start()
