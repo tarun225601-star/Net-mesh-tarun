@@ -6,7 +6,13 @@ workflows:
     scripts:
       - name: Build APK
         script: |
+          # पहले चेक करते हैं कि फाइल कहाँ है
+          echo "Listing files:"
+          ls -R
+          
+          # यहाँ उस सही फोल्डर का नाम लिखें जहाँ gradlew फाइल है
+          cd netmesh-android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
     artifacts:
-      - app/build/outputs/apk/debug/*.apk
+      - netmesh-android/app/build/outputs/apk/debug/*.apk
