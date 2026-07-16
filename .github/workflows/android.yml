@@ -24,8 +24,15 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      - name: List APK output (debug)
+        if: always()
+        run: find netmesh-android/app/build/outputs/apk -name "*.apk" 2>/dev/null || echo "No APK files found"
+
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: netmesh-android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
