@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id("com.android.application") version "8.3.0"
+    id("org.jetbrains.kotlin.android") version "1.9.23"
 }
 
 android {
@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.netmesh.vpn"
-        minSdk = 26           // Android 8 — ParcelFileDescriptor.fromFd, FileChannel NIO
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
@@ -28,22 +28,18 @@ android {
         jvmTarget = "17"
     }
 
-    // ── Signing config — reads from environment variables set by GitHub Actions ──
-    // Locally, Android Studio signs debug builds automatically.
-    // For release builds locally, set these environment variables or use the
-    // "Generate Signed APK" wizard in Android Studio instead.
     signingConfigs {
         release {
-            val storeFile     = System.getenv("SIGNING_STORE_FILE")
+            val storeFile = System.getenv("SIGNING_STORE_FILE")
             val storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            val keyAlias      = System.getenv("SIGNING_KEY_ALIAS")
-            val keyPassword   = System.getenv("SIGNING_KEY_PASSWORD")
+            val keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            val keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
 
-            if (storeFile != null && storeFile.isNotEmpty()) {
-                this.storeFile     = file(storeFile)
+            if (storeFile != null && storePassword != null && keyAlias != null && keyPassword != null) {
+                this.storeFile = file(storeFile)
                 this.storePassword = storePassword
-                this.keyAlias      = keyAlias
-                this.keyPassword   = keyPassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
             }
         }
     }
@@ -52,39 +48,21 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Use the release signing config when env vars are present (CI),
-            // otherwise fall back to debug signing (local builds)
-            val hasSigningEnv = System.getenv("SIGNING_STORE_FILE")?.isNotEmpty() == true
-            signingConfig = if (hasSigningEnv) signingConfigs.getByName("release")
-                            else signingConfigs.getByName("debug")
+            val hasSigningEnv = System.getenv("SIGNING_STORE_FILE") != null
+            signingConfig = if (hasSigningEnv) signingConfigs.getByName("release") else null
         }
     }
 }
 
 dependencies {
-    // WebRTC — Google's official pre-built AAR for Android
-    implementation("io.github.webrtc-sdk:android:125.6422.06.1")
-
-    // WebSocket client for signaling
+    implementation("io.github.webrtc-sdk:android:125.0.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
-    // JSON parsing for signaling messages
     implementation("org.json:json:20240303")
-
-    // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-
-    // Lifecycle (ViewModel, lifecycleScope)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
-
-    // Material design components
     implementation("com.google.android.material:material:1.12.0")
-
-    // LocalBroadcastManager — used to send state updates from Service to Activity
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
-
-    // ConstraintLayout — used in activity_main.xml
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 }
