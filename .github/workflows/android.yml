@@ -7,8 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
       - name: Build with Gradle
         run: |
           cd netmesh-android
+          # पुरानी फाइल को हटाकर नया रैपर जनरेट करो
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+          gradle wrapper
+          # अब बिल्ड चलाओ
           chmod +x gradlew
           ./gradlew assembleDebug
