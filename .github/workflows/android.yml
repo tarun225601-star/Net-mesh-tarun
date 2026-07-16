@@ -18,11 +18,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Fix Gradle Version and Build
+      - name: Grant Permission and Build
         run: |
           cd netmesh-android
-          ./gradlew wrapper --gradle-version 8.0
+          # सबसे पहले परमिशन देना बहुत जरूरी है
           chmod +x gradlew
+          # ग्रैडल वर्जन को फिक्स करना
+          ./gradlew wrapper --gradle-version 8.0
+          # अब बिल्ड कमांड चलाना
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
