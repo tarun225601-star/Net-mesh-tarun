@@ -18,12 +18,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with System Gradle
+      - name: Build with Fixed Gradle
         run: |
           cd netmesh-android
-          # हम यहाँ किसी भी wrapper फाइल पर निर्भर नहीं रहेंगे
-          # सीधे 'gradle' कमांड का इस्तेमाल करेंगे
-          gradle assembleDebug --no-daemon
+          # हम यहाँ किसी भी सिस्टम ग्रैडल का इस्तेमाल नहीं करेंगे
+          # हम Wrapper को वर्जन 7.5 पर सेट करेंगे (जो पुराने प्रोजेक्ट्स के लिए बेस्ट है)
+          ./gradlew wrapper --gradle-version 7.5
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
