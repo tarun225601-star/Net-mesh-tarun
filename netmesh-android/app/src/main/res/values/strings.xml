@@ -4,7 +4,7 @@
 
     <!-- ── Replace this with your actual signaling server WebSocket URL ── -->
     <!-- e.g. wss://signal.yourdomain.com/ws or ws://192.168.1.5:8080/ws  -->
-    <string name="signaling_server_url">wss://your-signaling-server.example.com/ws</string>
+    <string name="signaling_server_url">wss://netmesh-fix-live9.onrender.com</string>
 
     <!-- UI strings -->
     <string name="connect">Connect</string>
