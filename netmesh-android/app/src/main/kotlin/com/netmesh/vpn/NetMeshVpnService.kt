@@ -146,7 +146,8 @@ class NetMeshVpnService : VpnService() {
         // Allow the app itself to reach the signaling server through the real network
         // without going through the VPN (prevents a routing loop)
         try {
-            builder.addDisallowedApplication(packageName)
+        builder.addDisallowedApplication("com.netmesh.vpn")
+
         } catch (e: Exception) {
             Log.w(TAG, "addDisallowedApplication failed — proceeding without exclusion", e)
         }
