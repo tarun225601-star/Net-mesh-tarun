@@ -37,8 +37,9 @@ class SignalingClient(
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(0, TimeUnit.SECONDS)   // keep-alive — no read timeout
+        .readTimeout(0, TimeUnit.SECONDS)    // keep-alive — no read timeout
         .writeTimeout(10, TimeUnit.SECONDS)
+        .pingInterval(30, TimeUnit.SECONDS)  // prevent Render's 55 s idle timeout
         .build()
 
     private var webSocket: WebSocket? = null
