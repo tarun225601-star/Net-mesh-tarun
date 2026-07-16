@@ -3,11 +3,15 @@ name: Build NetMesh Android APK
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-debug:
+    name: Build Debug APK
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,18 +21,35 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: gradle
 
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      - name: Fix gradlew permissions
+        working-directory: netmesh-android
+        run: chmod +x gradlew
+
+      - name: Decode Keystore
+        working-directory: netmesh-android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
+
+      - name: Build Debug APK
+        working-directory: netmesh-android
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: sh gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
-             
+          path: netmesh-android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Clean up keystore
+        if: always()
+        working-directory: netmesh-android
+        run: rm -f release.jks
