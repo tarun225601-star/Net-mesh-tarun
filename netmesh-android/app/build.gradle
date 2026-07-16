@@ -1,84 +1,79 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-    namespace = "com.netmesh.vpn"
-    compileSdk = 34
+    namespace 'com.netmesh.vpn'
+    compileSdk 34
 
     defaultConfig {
-        applicationId = "com.netmesh.vpn"
-        minSdk = 26           // Android 8 — required for VpnService NIO APIs
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        applicationId 'com.netmesh.vpn'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
     }
 
     buildFeatures {
-        viewBinding = true
+        viewBinding true
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = '17'
     }
 
     signingConfigs {
         release {
-            val storeFile     = System.getenv("SIGNING_STORE_FILE")
-            val storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            val keyAlias      = System.getenv("SIGNING_KEY_ALIAS")
-            val keyPassword   = System.getenv("SIGNING_KEY_PASSWORD")
-
-            if (storeFile != null && storeFile.isNotEmpty()) {
-                this.storeFile     = file(storeFile)
-                this.storePassword = storePassword
-                this.keyAlias      = keyAlias
-                this.keyPassword   = keyPassword
+            def storeFilePath = System.getenv('SIGNING_STORE_FILE')
+            if (storeFilePath) {
+                storeFile     file(storeFilePath)
+                storePassword System.getenv('SIGNING_STORE_PASSWORD')
+                keyAlias      System.getenv('SIGNING_KEY_ALIAS')
+                keyPassword   System.getenv('SIGNING_KEY_PASSWORD')
             }
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            val hasSigningEnv = System.getenv("SIGNING_STORE_FILE")?.isNotEmpty() == true
-            signingConfig = if (hasSigningEnv) signingConfigs.getByName("release")
-                            else signingConfigs.getByName("debug")
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            def hasSigningEnv = System.getenv('SIGNING_STORE_FILE')?.trim()
+            signingConfig hasSigningEnv ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
 
 dependencies {
-    // WebRTC — Google's official pre-built AAR (Maven Central, no JitPack needed)
-    implementation("io.github.webrtc-sdk:android:125.6422.06.1")
+    // WebRTC — Google's official pre-built AAR on Maven Central
+    implementation 'io.github.webrtc-sdk:android:125.6422.06.1'
 
     // WebSocket client for signaling
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    // JSON parsing for signaling messages
-    implementation("org.json:json:20240303")
+    // JSON parsing
+    implementation 'org.json:json:20240303'
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 
     // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-ktx:1.9.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.activity:activity-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
 
-    // Material design components
-    implementation("com.google.android.material:material:1.12.0")
+    // Material design
+    implementation 'com.google.android.material:material:1.12.0'
 
-    // LocalBroadcastManager — state updates from Service to Activity
-    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    // LocalBroadcastManager
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
 
     // ConstraintLayout
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
