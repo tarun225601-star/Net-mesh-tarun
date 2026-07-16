@@ -1,6 +1,7 @@
+// Top-level plugins
 plugins {
-    id("com.android.application") version "8.3.0"
-    id("org.jetbrains.kotlin.android") version "1.9.23"
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -26,31 +27,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-    }
-
-    signingConfigs {
-        release {
-            val storeFile = System.getenv("SIGNING_STORE_FILE")
-            val storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            val keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-            val keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
-
-            if (storeFile != null && storePassword != null && keyAlias != null && keyPassword != null) {
-                this.storeFile = file(storeFile)
-                this.storePassword = storePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            val hasSigningEnv = System.getenv("SIGNING_STORE_FILE") != null
-            signingConfig = if (hasSigningEnv) signingConfigs.getByName("release") else null
-        }
     }
 }
 
