@@ -1,102 +1,31 @@
-name: Build NetMesh Android APK
+name: Android Build
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-
-  build-debug:
-    name: Build Debug APK
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
-          cache: gradle
+          distribution: 'temurin'
 
-      # Triple-safe permission fix:
-      #  1. chmod +x at runtime
-      #  2. git update-index so the repo itself marks it executable
-      #  3. sh gradlew instead of ./gradlew — works even with bad line endings
-      - name: Fix gradlew permissions
-        working-directory: netmesh-android
+      - name: Build with System Gradle
         run: |
-          chmod +x gradlew
-          git update-index --chmod=+x gradlew || true
-          ls -la gradlew
+          # हम wrapper को छोड़ रहे हैं, सीधे सिस्टम ग्रैडल का उपयोग कर रहे हैं
+          cd netmesh-android
+          gradle assembleDebug --no-daemon
 
-      - name: Build debug APK
-        working-directory: netmesh-android
-        run: sh gradlew assembleDebug --stacktrace
-
-      - name: Upload debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NetMesh-debug-${{ github.run_number }}
-          path: netmesh-android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-
-  build-release:
-    name: Build Signed Release APK
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      - name: Fix gradlew permissions
-        working-directory: netmesh-android
-        run: |
-          chmod +x gradlew
-          git update-index --chmod=+x gradlew || true
-
-      - name: Decode keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        working-directory: netmesh-android
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/netmesh-release.jks
-
-      - name: Build signed release APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        working-directory: netmesh-android
-        env:
-          SIGNING_STORE_FILE: app/netmesh-release.jks
-          SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: sh gradlew assembleRelease --stacktrace
-
-      - name: Build unsigned release (no secrets)
-        if: ${{ secrets.KEYSTORE_BASE64 == '' }}
-        working-directory: netmesh-android
-        run: sh gradlew assembleRelease --stacktrace || true
-
-      - name: Upload signed release APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: NetMesh-release-signed-${{ github.run_number }}
-          path: netmesh-android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 90
-
-      - name: Clean up keystore
-        if: always()
-        working-directory: netmesh-android
-        run: rm -f app/netmesh-release.jks
+          name: app-debug
+          path: netmesh-android/app/build/outputs/apk/debug/*.apk

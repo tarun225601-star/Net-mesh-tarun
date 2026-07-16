@@ -1,0 +1,16 @@
+workflows:
+  android-build:
+    name: Android Build
+    environment:
+      java: 17
+    scripts:
+      - name: Build APK
+        script: |
+          # यह कमांड सुनिश्चित करेगी कि हम बिल्कुल सही फोल्डर में हैं
+          cd netmesh-android
+          # फाइल की परमिशन को पक्का करने के लिए
+          chmod +x ./gradlew
+          # बिल्ड कमांड
+          ./gradlew assembleDebug --no-daemon
+    artifacts:
+      - netmesh-android/app/build/outputs/apk/debug/*.apk
