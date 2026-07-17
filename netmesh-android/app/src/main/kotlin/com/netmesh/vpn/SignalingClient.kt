@@ -8,20 +8,11 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "NetMesh/Signaling"
 
-/**
- * WebSocket-based signaling client.
- *
- * Exchanges SDP offers/answers and ICE candidates with your relay server.
- *
- * Protocol (all messages are JSON):
- *   → { "type": "offer",     "sdp": "<sdp string>" }
- *   ← { "type": "answer",    "sdp": "<sdp string>" }
- *   ↔ { "type": "candidate", "sdpMid": "0", "sdpMLineIndex": 0, "candidate": "<...>" }
- *   ← { "type": "error",     "message": "<reason>" }
- */
 class SignalingClient(
     private val serverUrl: String,
     private val listener: Listener
@@ -36,72 +27,66 @@ class SignalingClient(
     }
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(0, TimeUnit.SECONDS)    // keep-alive — no read timeout
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(0, TimeUnit.SECONDS)
         .writeTimeout(10, TimeUnit.SECONDS)
-        .pingInterval(30, TimeUnit.SECONDS)  // prevent Render's 55 s idle timeout
+        .pingInterval(30, TimeUnit.SECONDS)
         .build()
 
     private var webSocket: WebSocket? = null
+    private val isConnecting = AtomicBoolean(false)
+    private val isDisconnected = AtomicBoolean(false)
+    private val retryCount = AtomicInteger(0)
 
     fun connect() {
+        if (isConnecting.getAndSet(true)) return
+        doConnect()
+    }
+
+    private fun doConnect() {
         val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
-
             override fun onOpen(ws: WebSocket, response: Response) {
-                Log.i(TAG, "WebSocket connected to $serverUrl")
+                retryCount.set(0)
+                isConnecting.set(false)
                 listener.onConnected()
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
-                Log.d(TAG, "← $text")
                 try {
                     val json = JSONObject(text)
                     when (json.getString("type")) {
-                        "answer" -> {
-                            val sdp = json.getString("sdp")
-                            listener.onAnswer(sdp)
-                        }
-                        "candidate" -> {
-                            val mid   = json.optString("sdpMid", "0")
-                            val index = json.optInt("sdpMLineIndex", 0)
-                            val cand  = json.getString("candidate")
-                            listener.onRemoteCandidate(mid, index, cand)
-                        }
-                        "error" -> {
-                            listener.onError(json.optString("message", "Unknown signaling error"))
-                        }
-                        else -> Log.w(TAG, "Unknown message type: ${json.getString("type")}")
+                        "answer" -> listener.onAnswer(json.getString("sdp"))
+                        "candidate" -> listener.onRemoteCandidate(
+                            json.optString("sdpMid", "0"),
+                            json.optInt("sdpMLineIndex", 0),
+                            json.getString("candidate")
+                        )
+                        "error" -> listener.onError(json.optString("message", "Unknown error"))
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to parse signaling message", e)
-                }
+                } catch (e: Exception) { Log.e(TAG, "Parse error", e) }
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                Log.e(TAG, "WebSocket failure", t)
-                listener.onError("WebSocket error: ${t.message}")
-                listener.onDisconnected()
-            }
-
-            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                Log.i(TAG, "WebSocket closed: $code / $reason")
-                listener.onDisconnected()
+                isConnecting.set(false)
+                if (!isDisconnected.get() && retryCount.get() < 3) {
+                    retryCount.incrementAndGet()
+                    doConnect()
+                } else {
+                    listener.onDisconnected()
+                }
             }
         })
     }
 
-    /** Send our SDP offer to the relay server */
     fun sendOffer(sdp: String) {
         val msg = JSONObject().apply {
             put("type", "offer")
             put("sdp", sdp)
         }.toString()
-        Log.d(TAG, "→ offer")
         webSocket?.send(msg)
     }
 
-    /** Send a local ICE candidate to the relay server */
     fun sendCandidate(sdpMid: String, sdpMLineIndex: Int, candidate: String) {
         val msg = JSONObject().apply {
             put("type", "candidate")
@@ -109,13 +94,11 @@ class SignalingClient(
             put("sdpMLineIndex", sdpMLineIndex)
             put("candidate", candidate)
         }.toString()
-        Log.d(TAG, "→ candidate")
         webSocket?.send(msg)
     }
 
     fun disconnect() {
-        webSocket?.close(1000, "Client disconnecting")
-        webSocket = null
-        client.dispatcher.executorService.shutdown()
+        isDisconnected.set(true)
+        webSocket?.close(1000, "Disconnecting")
     }
 }
