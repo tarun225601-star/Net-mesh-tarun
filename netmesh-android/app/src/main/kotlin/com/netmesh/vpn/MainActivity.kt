@@ -14,7 +14,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val webView = findViewById<WebView>(R.id.webView)
+        
+        // वाइट स्क्रीन फिक्स और वेबव्यू सेटिंग्स
         webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true 
+        webView.settings.loadWithOverviewMode = true
+        webView.settings.useWideViewPort = true
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://netmesh-fix-live9.onrender.com")
 
@@ -24,7 +29,9 @@ class MainActivity : AppCompatActivity() {
             if (intent != null) {
                 startActivityForResult(intent, 0)
             } else {
-                startService(Intent(this, NetMeshVpnService::class.java))
+                val vpnIntent = Intent(this, NetMeshVpnService::class.java)
+                vpnIntent.action = "TOGGLE_VPN"
+                startService(vpnIntent)
             }
         }
     }
