@@ -3,12 +3,10 @@ package com.netmesh.vpn
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class NetMeshVpnService : VpnService(), SignalingClient.Listener {
@@ -42,7 +40,6 @@ class NetMeshVpnService : VpnService(), SignalingClient.Listener {
             .setBlocking(true)
 
         vpnInterface = builder.establish()
-        
         signalingClient?.connect()
         broadcastState(VpnState.CONNECTING)
     }
@@ -60,7 +57,7 @@ class NetMeshVpnService : VpnService(), SignalingClient.Listener {
     private fun broadcastState(state: VpnState, error: String? = null) {
         val intent = Intent(VpnState.BROADCAST_ACTION).apply {
             putExtra(VpnState.EXTRA_STATE, state.name)
-            putExtra(VpnState.EXTRA_ERROR, error)
+            if (error != null) putExtra(VpnState.EXTRA_ERROR, error)
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
@@ -97,7 +94,7 @@ class NetMeshVpnService : VpnService(), SignalingClient.Listener {
     override fun onDisconnected() {
         broadcastState(VpnState.DISCONNECTED)
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         stopVpn()
