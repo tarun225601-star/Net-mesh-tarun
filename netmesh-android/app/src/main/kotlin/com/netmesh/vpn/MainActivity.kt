@@ -18,8 +18,7 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://netmesh-fix-live9.onrender.com")
 
-        val vpnButton = findViewById<Button>(R.id.vpnButton)
-        vpnButton.setOnClickListener {
+        findViewById<Button>(R.id.vpnButton).setOnClickListener {
             val intent = VpnService.prepare(this)
             if (intent != null) {
                 startActivityForResult(intent, 0)
