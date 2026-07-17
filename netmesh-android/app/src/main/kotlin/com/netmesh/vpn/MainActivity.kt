@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -20,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.netmesh.vpn.databinding.ActivityMainBinding
 
 private const val TAG = "NetMesh/MainActivity"
@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
             }
             webChromeClient = WebChromeClient()
-            loadUrl(getString(R.string.web_dashboard_url))
+            loadUrl("https://your-dashboard-url.com") // इसे अपनी URL से बदल लें
         }
     }
 
@@ -110,7 +110,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startVpnService() {
-        startForegroundService(Intent(this, NetMeshVpnService::class.java))
+        val intent = Intent(this, NetMeshVpnService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
         updateUI(VpnState.CONNECTING)
     }
 
