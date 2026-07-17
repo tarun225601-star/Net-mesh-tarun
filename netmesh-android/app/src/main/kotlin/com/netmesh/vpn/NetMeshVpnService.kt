@@ -15,9 +15,8 @@ class NetMeshVpnService : VpnService() {
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
         
-        // यह आइकन वाला एरर फिक्स कर दिया है
         val notification = Notification.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.stat_notify_sync) 
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle("NetMesh Active")
             .build()
             
@@ -27,10 +26,13 @@ class NetMeshVpnService : VpnService() {
         builder.setSession("NetMesh")
         builder.addAddress("10.0.0.2", 24)
         builder.addRoute("0.0.0.0", 0)
+        builder.setBlocking(true)
         
         try {
             builder.establish()
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            stopSelf()
+        }
         
         return START_STICKY
     }
