@@ -17,7 +17,8 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webView)
         webView.settings.javaScriptEnabled = true
         webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://www.google.com")
+        // तुम्हारा सही लिंक यहाँ है
+        webView.loadUrl("https://netmesh-fix-live9.onrender.com")
 
         val vpnButton = findViewById<Button>(R.id.vpnButton)
         vpnButton.setOnClickListener {
