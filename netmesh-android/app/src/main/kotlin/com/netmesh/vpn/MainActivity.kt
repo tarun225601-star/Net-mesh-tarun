@@ -1,4 +1,4 @@
-package com.example.netmesh // अपना सही पैकेज नाम डालें
+package com.netmesh.vpn
 
 import android.content.Intent
 import android.net.VpnService
@@ -32,8 +32,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
-    // अनुमति मिलने के बाद सर्विस शुरू करने के लिए
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK) {
