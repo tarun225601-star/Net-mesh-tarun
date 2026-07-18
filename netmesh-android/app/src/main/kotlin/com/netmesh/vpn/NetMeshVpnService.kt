@@ -15,8 +15,10 @@ class NetMeshVpnService : VpnService() {
         
         val builder = Builder()
         builder.setSession("NetMeshTunnel")
-        builder.addAddress("10.0.0.2", 24)
-        builder.addDnsServer("8.8.8.8")
+        // MTU फिक्स और नेटवर्क स्टेबिलिटी बदलाव
+        builder.setMtu(1400) 
+        builder.addAddress("192.168.0.2", 24)
+        builder.addDnsServer("1.1.1.1")
         builder.addRoute("0.0.0.0", 0)
         builder.addDisallowedApplication(packageName)
         
@@ -25,7 +27,11 @@ class NetMeshVpnService : VpnService() {
     }
 
     override fun onDestroy() {
-        vpnInterface?.close()
+        try {
+            vpnInterface?.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         vpnInterface = null
         super.onDestroy()
     }
