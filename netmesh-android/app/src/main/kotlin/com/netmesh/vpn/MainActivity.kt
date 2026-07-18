@@ -13,7 +13,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val btnToggle = findViewById<Button>(R.id.btnVpnToggle)
+        // यहाँ ID को आपके XML के अनुसार 'vpnButton' कर दिया गया है
+        val btnToggle = findViewById<Button>(R.id.vpnButton)
 
         btnToggle.setOnClickListener {
             if (isVpnRunning) {
@@ -37,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK) {
             startService(Intent(this, NetMeshVpnService::class.java))
-            findViewById<Button>(R.id.btnVpnToggle).text = "Disconnect"
+            findViewById<Button>(R.id.vpnButton).text = "Disconnect"
             isVpnRunning = true
         }
     }
