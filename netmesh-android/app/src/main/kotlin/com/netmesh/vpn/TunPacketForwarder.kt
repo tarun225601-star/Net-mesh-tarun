@@ -1,47 +1,46 @@
 package com.netmesh.vpn
 
 import android.os.ParcelFileDescriptor
-import android.util.Log
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicLong
 
 class TunPacketForwarder(
-    private val tunInterface: ParcelFileDescriptor,
-    private val dataChannel: org.webrtc.DataChannel
-) : Runnable {
+    private val tunFd: ParcelFileDescriptor,
+    private val webRtcManager: WebRtcManager // आपका WebRTC मैनेजर क्लास
+) {
+    @Volatile var isRunning = true
+    val upBytes = AtomicLong(0)
+    val downBytes = AtomicLong(0)
 
-    private val inputStream = FileInputStream(tunInterface.fileDescriptor)
-    private val outputStream = FileOutputStream(tunInterface.fileDescriptor)
-    private var isRunning = true
+    fun startForwarding() {
+        val inputStream = FileInputStream(tunFd.fileDescriptor)
+        val outputStream = FileOutputStream(tunFd.fileDescriptor)
+        val buffer = ByteArray(1500) // MTU 1500 के साथ मैच
 
-    override fun run() {
-        val buffer = ByteBuffer.allocate(32767)
-        try {
-            while (isRunning) {
-                val length = inputStream.read(buffer.array())
-                if (length > 0) {
-                    val data = ByteBuffer.allocate(length)
-                    data.put(buffer.array(), 0, length)
-                    data.flip()
-                    val payload = org.webrtc.DataChannel.Buffer(data, false)
-                    dataChannel.send(payload)
+        // TUN -> WebRTC Loop
+        Thread {
+            try {
+                while (isRunning) {
+                    val length = inputStream.read(buffer)
+                    if (length == -1) break // EOF मिलते ही लूप तोड़ें
+                    if (length > 0) {
+                        upBytes.addAndGet(length.toLong())
+                        webRtcManager.sendPacket(buffer.copyOf(length))
+                    }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            Log.e("TunForwarder", "Error forwarding packets", e)
-        }
+        }.start()
     }
 
-    fun write(data: ByteBuffer) {
-        try {
-            outputStream.write(data.array(), 0, data.remaining())
-        } catch (e: Exception) {
-            Log.e("TunForwarder", "Error writing to TUN", e)
+    // WebRTC -> TUN path
+    fun onPacketFromRelay(packet: ByteArray) {
+        synchronized(this) {
+            val outputStream = FileOutputStream(tunFd.fileDescriptor)
+            outputStream.write(packet)
+            downBytes.addAndGet(packet.size.toLong())
         }
-    }
-
-    fun stop() {
-        isRunning = false
     }
 }
