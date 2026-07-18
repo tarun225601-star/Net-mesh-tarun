@@ -11,7 +11,7 @@ import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
     const val NOTIFICATION_ID = 1001
-    const val CHANNEL_ID = "netmesh_vpn"
+    const val CHANNEL_ID = "netmesh_vpn_channel"
 
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -19,12 +19,8 @@ object NotificationHelper {
                 CHANNEL_ID,
                 "VPN Tunnel",
                 NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Shows when NetMesh VPN is active"
-                setShowBadge(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-            val nm = context.getSystemService(NotificationManager::class.java)
+            )
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
         }
     }
@@ -32,17 +28,13 @@ object NotificationHelper {
     fun buildNotification(context: Context, status: String): Notification {
         val openIntent = PendingIntent.getActivity(
             context, 0,
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            },
+            Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val stopIntent = PendingIntent.getService(
             context, 1,
-            Intent(context, NetMeshVpnService::class.java).apply {
-                action = "ACTION_STOP"
-            },
+            Intent(context, NetMeshVpnService::class.java).apply { action = "TOGGLE_VPN" },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -51,11 +43,8 @@ object NotificationHelper {
             .setContentText(status)
             .setSmallIcon(android.R.drawable.ic_lock_lock)
             .setContentIntent(openIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
             .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .addAction(android.R.drawable.ic_delete, "Disconnect", stopIntent)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 }
