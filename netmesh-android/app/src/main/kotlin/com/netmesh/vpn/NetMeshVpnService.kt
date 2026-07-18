@@ -8,6 +8,11 @@ class NetMeshVpnService : VpnService() {
     private var vpnInterface: ParcelFileDescriptor? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "STOP_VPN") {
+            onDestroy()
+            return START_NOT_STICKY
+        }
+        
         val builder = Builder()
         builder.setSession("NetMeshTunnel")
         builder.addAddress("10.0.0.2", 24)
@@ -21,6 +26,7 @@ class NetMeshVpnService : VpnService() {
 
     override fun onDestroy() {
         vpnInterface?.close()
+        vpnInterface = null
         super.onDestroy()
     }
 }
