@@ -1,35 +1,45 @@
-package com.netmesh.vpn
+package com.example.netmesh // अपना सही पैकेज नाम डालें
 
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
+    private var isVpnRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val webView = findViewById<WebView>(R.id.webView)
-        webView.settings.javaScriptEnabled = true
-        webView.webViewClient = WebViewClient()
-        // तुम्हारा सही लिंक यहाँ है
-        webView.loadUrl("https://netmesh-fix-live9.onrender.com")
+        val btnToggle = findViewById<Button>(R.id.btnVpnToggle)
 
-        val vpnButton = findViewById<Button>(R.id.vpnButton)
-        vpnButton.setOnClickListener {
-            val intent = VpnService.prepare(this)
-            if (intent != null) {
-                startActivityForResult(intent, 0)
+        btnToggle.setOnClickListener {
+            if (isVpnRunning) {
+                stopService(Intent(this, NetMeshVpnService::class.java))
+                btnToggle.text = "Connect"
+                isVpnRunning = false
             } else {
-                val vpnIntent = Intent(this, NetMeshVpnService::class.java)
-                vpnIntent.action = "TOGGLE_VPN"
-                startService(vpnIntent)
+                val intent = VpnService.prepare(this)
+                if (intent != null) {
+                    startActivityForResult(intent, 0)
+                } else {
+                    startService(Intent(this, NetMeshVpnService::class.java))
+                    btnToggle.text = "Disconnect"
+                    isVpnRunning = true
+                }
             }
+        }
+    }
+    
+    // अनुमति मिलने के बाद सर्विस शुरू करने के लिए
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK) {
+            startService(Intent(this, NetMeshVpnService::class.java))
+            findViewById<Button>(R.id.btnVpnToggle).text = "Disconnect"
+            isVpnRunning = true
         }
     }
 }
