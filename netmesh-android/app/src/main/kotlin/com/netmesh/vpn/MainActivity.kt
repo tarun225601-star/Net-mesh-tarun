@@ -9,6 +9,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -16,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webView)
         webView.settings.javaScriptEnabled = true
         webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://netmesh.yourdomain.com")
+        webView.loadUrl("https://www.google.com")
 
         val vpnButton = findViewById<Button>(R.id.vpnButton)
         vpnButton.setOnClickListener {
