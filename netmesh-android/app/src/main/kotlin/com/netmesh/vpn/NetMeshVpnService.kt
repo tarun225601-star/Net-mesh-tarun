@@ -1,4 +1,4 @@
-package com.example.netmesh // अपना सही पैकेज नाम डालें
+package com.netmesh.vpn
 
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
