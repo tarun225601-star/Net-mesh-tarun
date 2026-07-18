@@ -14,14 +14,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val webView = findViewById<WebView>(R.id.webView)
-        
-        // वाइट स्क्रीन फिक्स और वेबव्यू सेटिंग्स
         webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true 
-        webView.settings.loadWithOverviewMode = true
-        webView.settings.useWideViewPort = true
         webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://netmesh-fix-live9.onrender.com")
+        webView.loadUrl("https://netmesh.yourdomain.com")
 
         val vpnButton = findViewById<Button>(R.id.vpnButton)
         vpnButton.setOnClickListener {
