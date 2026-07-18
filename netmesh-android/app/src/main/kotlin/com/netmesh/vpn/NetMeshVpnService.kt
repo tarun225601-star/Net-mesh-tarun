@@ -8,31 +8,29 @@ class NetMeshVpnService : VpnService() {
     private var vpnInterface: ParcelFileDescriptor? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "STOP_VPN") {
-            onDestroy()
-            return START_NOT_STICKY
-        }
-        
         val builder = Builder()
         builder.setSession("NetMeshTunnel")
-        // MTU फिक्स और नेटवर्क स्टेबिलिटी बदलाव
-        builder.setMtu(1400) 
-        builder.addAddress("192.168.0.2", 24)
-        builder.addDnsServer("1.1.1.1")
+        
+        // Android 14+ और स्थिरता के लिए MTU 1500
+        builder.setMtu(1500) 
+        builder.addAddress("10.8.0.2", 24)
+        builder.addDnsServer("8.8.8.8")
+        builder.addSearchDomain("com")
         builder.addRoute("0.0.0.0", 0)
-        builder.addDisallowedApplication(packageName)
+        
+        // डायनामिक ऐप एक्सक्लूजन ताकि VPN लूप न बने
+        try {
+            builder.addDisallowedApplication(packageName)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         
         vpnInterface = builder.establish()
         return START_STICKY
     }
 
     override fun onDestroy() {
-        try {
-            vpnInterface?.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        vpnInterface = null
+        vpnInterface?.close()
         super.onDestroy()
     }
 }
