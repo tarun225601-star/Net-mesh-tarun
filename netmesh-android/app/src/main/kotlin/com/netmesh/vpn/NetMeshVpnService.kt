@@ -1,25 +1,25 @@
-package com.netmesh.vpn
+package com.example.netmesh // अपना सही पैकेज नाम डालें
 
-import android.app.Service
-import android.content.Intent
 import android.net.VpnService
-import android.os.IBinder
+import android.os.ParcelFileDescriptor
 
 class NetMeshVpnService : VpnService() {
+    private var vpnInterface: ParcelFileDescriptor? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "TOGGLE_VPN") {
-            stopForeground(true)
-            stopSelf()
-            return START_NOT_STICKY
-        }
+        val builder = Builder()
+        builder.setSession("NetMeshTunnel")
+        builder.addAddress("10.0.0.2", 24)
+        builder.addDnsServer("8.8.8.8")
+        builder.addRoute("0.0.0.0", 0)
+        builder.addDisallowedApplication(packageName)
         
-        // नोटिफिकेशन चालू करने के लिए
-        NotificationHelper.createChannel(this)
-        startForeground(1001, NotificationHelper.buildNotification(this, "VPN Running"))
-        
+        vpnInterface = builder.establish()
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onDestroy() {
+        vpnInterface?.close()
+        super.onDestroy()
+    }
 }
