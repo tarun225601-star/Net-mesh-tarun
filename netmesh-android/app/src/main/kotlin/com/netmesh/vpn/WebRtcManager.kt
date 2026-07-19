@@ -1,4 +1,18 @@
-package com.netmesh.vpn
+package com.netmesh.vpnclass WebRtcManager {
+
+    // --- यहाँ सबसे ऊपर जोड़ें ---
+    private var onDataChannelOpenListener: (() -> Unit)? = null
+
+    fun setOnDataChannelOpenListener(listener: () -> Unit) {
+        this.onDataChannelOpenListener = listener
+    }
+    // ---------------------------
+
+    // बाकी का कोड...
+    // जब आपका WebRTC डेटा चैनल कनेक्ट हो जाए, तो वहाँ यह कॉल करें:
+    // onDataChannelOpenListener?.invoke()
+}
+
 
 import android.content.Context
 import android.util.Log
