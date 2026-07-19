@@ -1,31 +1,36 @@
-package com.netmesh.vpn
-
-import android.os.ParcelFileDescriptor
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.concurrent.atomic.AtomicLong
+// TunPacketForwarder.kt में ये बदलाव करें
 
 class TunPacketForwarder(
     private val tunFd: ParcelFileDescriptor,
-    private val webRtcManager: WebRtcManager // आपका WebRTC मैनेजर क्लास
+    private val webRtcManager: WebRtcManager
 ) {
-    @Volatile var isRunning = true
-    val upBytes = AtomicLong(0)
-    val downBytes = AtomicLong(0)
+    @Volatile
+    private var isRunning = false
+    private val upBytes = AtomicLong(0)
+    private val downBytes = AtomicLong(0)
+
+    // नया: फॉरवर्डिंग को सुरक्षित रूप से रोकने के लिए
+    fun stopForwarding() {
+        isRunning = false
+    }
 
     fun startForwarding() {
+        if (isRunning) return
+        isRunning = true
+        
         val inputStream = FileInputStream(tunFd.fileDescriptor)
         val outputStream = FileOutputStream(tunFd.fileDescriptor)
-        val buffer = ByteArray(1500) // MTU 1500 के साथ मैच
+        val buffer = ByteArray(1500)
 
-        // TUN -> WebRTC Loop
+        // WebRTC लूप
         Thread {
             try {
                 while (isRunning) {
                     val length = inputStream.read(buffer)
-                    if (length == -1) break // EOF मिलते ही लूप तोड़ें
+                    if (length == -1) break
                     if (length > 0) {
                         upBytes.addAndGet(length.toLong())
+                        // सुनिश्चित करें कि यह तभी कॉल हो जब चैनल OPEN हो
                         webRtcManager.sendPacket(buffer.copyOf(length))
                     }
                 }
@@ -35,7 +40,7 @@ class TunPacketForwarder(
         }.start()
     }
 
-    // WebRTC -> TUN path
+    // WebRTC -> TUN पाथ
     fun onPacketFromRelay(packet: ByteArray) {
         synchronized(this) {
             val outputStream = FileOutputStream(tunFd.fileDescriptor)
