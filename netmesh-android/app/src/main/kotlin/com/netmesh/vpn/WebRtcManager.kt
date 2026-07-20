@@ -11,12 +11,20 @@ class WebRtcManager(private val context: Context) {
     private var factory: PeerConnectionFactory? = null
     private var peerConnection: PeerConnection? = null
     private var dataChannel: DataChannel? = null
+    
+    // NetMeshVpnService.kt का एरर ठीक करने के लिए यह लिसनर जोड़ा है
+    private var dataChannelOpenListener: (() -> Unit)? = null
 
     init {
         val options = PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
         PeerConnectionFactory.initialize(options)
         factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
         startConnection()
+    }
+
+    // सर्विस फाइल के लिए यह फंक्शन बनाना जरूरी था
+    fun setOnDataChannelOpenListener(listener: () -> Unit) {
+        this.dataChannelOpenListener = listener
     }
 
     private fun startConnection() {
@@ -26,8 +34,7 @@ class WebRtcManager(private val context: Context) {
 
         peerConnection = factory?.createPeerConnection(rtcConfig, object : PeerConnection.Observer {
             override fun onIceCandidate(candidate: IceCandidate?) {
-                // यहाँ से कैंडिडेट JSON फॉर्मेट में सर्वर को भेजें
-                Log.d(TAG, "सिग्नलिंग: सर्वर को यह कैंडिडेट भेजें: ${candidate?.sdp}")
+                Log.d(TAG, "ICE Candidate found: ${candidate?.sdp}")
             }
 
             override fun onDataChannel(dc: DataChannel?) {
@@ -36,30 +43,40 @@ class WebRtcManager(private val context: Context) {
             }
 
             override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
-                Log.d(TAG, "ICE स्थिति: $state")
+                Log.d(TAG, "ICE Connection State: $state")
             }
-            // अन्य जरूरी खाली मेथड्स...
-            override fun onSignalingChange(p0: PeerConnection.SignalingState?) {}
-            override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {}
-            override fun onAddStream(p0: MediaStream?) {}
-            override fun onRemoveStream(p0: MediaStream?) {}
+
+            // यह फंक्शन न होने से कंपाइलर एरर दे रहा था
+            override fun onIceConnectionReceivingChange(receiving: Boolean) {
+                Log.d(TAG, "ICE Connection Receiving: $receiving")
+            }
+
+            override fun onIceGatheringChange(state: PeerConnection.IceGatheringState?) {}
+            
+            override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) {}
+            
+            override fun onSignalingChange(state: PeerConnection.SignalingState?) {}
+            
+            override fun onAddStream(stream: MediaStream?) {}
+            
+            override fun onRemoveStream(stream: MediaStream?) {}
+            
             override fun onRenegotiationNeeded() {}
-            override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {}
+            
+            override fun onAddTrack(receiver: RtpReceiver?, streams: Array<out MediaStream>?) {}
         })
 
-        // 1. डेटा चैनल बनाएं
         val init = DataChannel.Init()
         dataChannel = peerConnection?.createDataChannel("vizia-tunnel", init)
         setupDataChannel()
 
-        // 2. ऑफर बनाएं (हैंडशेक की शुरुआत)
         peerConnection?.createOffer(object : SdpObserver {
             override fun onCreateSuccess(sdp: SessionDescription?) {
                 peerConnection?.setLocalDescription(this, sdp)
-                Log.d(TAG, "ऑफर तैयार! इसे अपने Render सर्वर के API पर भेजें।")
+                Log.d(TAG, "Offer ready!")
             }
             override fun onSetSuccess() {}
-            override fun onCreateFailure(err: String?) { Log.e(TAG, "ऑफर फेल: $err") }
+            override fun onCreateFailure(err: String?) {}
             override fun onSetFailure(err: String?) {}
         }, MediaConstraints())
     }
@@ -67,12 +84,19 @@ class WebRtcManager(private val context: Context) {
     private fun setupDataChannel() {
         dataChannel?.registerObserver(object : DataChannel.Observer {
             override fun onMessage(buffer: DataChannel.Buffer) {
-                // सर्वर से डेटा आ रहा है
+                // डेटा पैकेट हैंडल करने के लिए
             }
+
             override fun onStateChange() {
+                Log.d(TAG, "DataChannel State: ${dataChannel?.state()}")
                 if (dataChannel?.state() == DataChannel.State.OPEN) {
-                    Log.d(TAG, "✅ टनल पूरी तरह खुल गई है! अब नेट चलना चाहिए।")
+                    dataChannelOpenListener?.invoke() // लिसनर को ट्रिगर करें
                 }
+            }
+
+            // यह फंक्शन भी मिसिंग था, इसे जोड़ दिया है
+            override fun onBufferedAmountChange(previousAmount: Long) {
+                Log.d(TAG, "Buffered amount changed: $previousAmount")
             }
         })
     }
