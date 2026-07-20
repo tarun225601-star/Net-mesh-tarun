@@ -1,8 +1,20 @@
-<service
-    android:name=".NetMeshVpnService"
-    android:permission="android.permission.BIND_VPN_SERVICE"
-    android:exported="true">
-    <intent-filter>
-        <action android:name="android.net.VpnService" />
-    </intent-filter>
-</service>
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.netmesh">
+
+    <application
+        android:allowBackup="true"
+        android:label="NetMesh"
+        android:icon="@mipmap/ic_launcher">
+
+        <service
+            android:name=".NetMeshVpnService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>
