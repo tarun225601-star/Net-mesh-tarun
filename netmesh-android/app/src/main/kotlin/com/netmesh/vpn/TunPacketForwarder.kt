@@ -27,7 +27,7 @@ class TunPacketForwarder(
                 // FileInputStream और FileOutputStream का उपयोग सही तरीके से करें
                 val inputStream = FileInputStream(tunFd.fileDescriptor)
                 val outputStream = FileOutputStream(tunFd.fileDescriptor)
-                val buffer = ByteArray(1500)
+                val buffer = ByteArray(1350)
 
                 while (isRunning) {
                     val length = inputStream.read(buffer)
