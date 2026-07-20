@@ -16,7 +16,7 @@ class NetMeshVpnService : VpnService() {
         builder.setMtu(1500)
         builder.addAddress("10.8.0.2", 24)
         builder.addDnsServer("8.8.8.8")
-        builder.addRoute("0.0.0.0", 0)
+        builder.addRoute("223.237.25.168", 32)
 
         try {
             vpnInterface = builder.establish()
