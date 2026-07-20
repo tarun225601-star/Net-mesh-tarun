@@ -7,10 +7,18 @@ import android.util.Log
 
 class NetMeshVpnService : VpnService() {
     private var vpnInterface: ParcelFileDescriptor? = null
-    private var webRtcManager: WebRtcManager? = null // सुनिश्चित करें कि यह इनिशियलाइज़्ड है
+    private var webRtcManager: WebRtcManager? = null
     private var tunPacketForwarder: TunPacketForwarder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "STOP_VPN") {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        // यहाँ इनिशियलाइज़ेशन फिक्स किया है
+        webRtcManager = WebRtcManager(this)
+
         val builder = Builder()
         builder.setSession("NetMeshTunnel")
         builder.setMtu(1500)
@@ -24,16 +32,17 @@ class NetMeshVpnService : VpnService() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
         return START_STICKY
     }
 
     private fun setupWebRtcListener() {
-        // webRtcManager को सही जगह पर इनिशियलाइज़ करें
+        // अब webRtcManager null नहीं होगा
         webRtcManager?.setOnDataChannelOpenListener {
             vpnInterface?.let { fd ->
                 tunPacketForwarder = TunPacketForwarder(fd, webRtcManager!!)
                 tunPacketForwarder?.startForwarding()
-                Log.d("NetMeshVpnService", "Data channel opened, forwarding started")
+                Log.d("NetMeshVpnService", "Data channel open and forwarding started")
             }
         }
     }
