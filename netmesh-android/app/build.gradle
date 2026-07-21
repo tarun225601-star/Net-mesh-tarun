@@ -33,9 +33,7 @@ android {
 }
 
 dependencies {
-    // यह वाला WebRTC वर्ज़न सीधा Maven Central से बिना किसी एरर के डाउनलोड हो जाएगा
-    implementation 'org.webrtc:google-webrtc:1.0.30039'
-
+    // WebRTC dependency हटा दी गई है ताकि कोई बिल्ड एरर न आए
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
