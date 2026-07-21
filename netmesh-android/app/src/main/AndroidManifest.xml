@@ -6,6 +6,16 @@
         android:label="NetMesh"
         android:icon="@mipmap/ic_launcher">
 
+        <!-- यह हिस्सा ऐप को होम स्क्रीन पर लाएगा -->
+        <activity 
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".vpn.NetMeshVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
