@@ -1,4 +1,4 @@
-package com.netmesh.vpn
+package com.netmesh.app.v2
 
 import android.content.Intent
 import android.net.VpnService
@@ -13,7 +13,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // एक बड़ा बटन बनाना
         val btn = Button(this)
         btn.text = "Connect VPN"
         btn.textSize = 24f
@@ -24,7 +23,6 @@ class MainActivity : AppCompatActivity() {
 
         btn.setOnClickListener {
             if (!isConnected) {
-                // VPN परमिशन चेक करना
                 val intent = VpnService.prepare(this)
                 if (intent != null) {
                     startActivityForResult(intent, 0)
@@ -34,7 +32,6 @@ class MainActivity : AppCompatActivity() {
                 btn.text = "Disconnect"
                 isConnected = true
             } else {
-                // VPN बंद करना
                 stopService(Intent(this, NetMeshVpnService::class.java))
                 btn.text = "Connect VPN"
                 isConnected = false
