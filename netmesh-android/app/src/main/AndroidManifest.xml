@@ -9,8 +9,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <!-- यह रही MainActivity जो होम स्क्रीन पर आइकॉन लाएगी -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- यह आपकी वीपीएन सर्विस है -->
         <service
-            android:name=".NetMeshVpnService"
+            android:name="com.netmesh.app.v2.NetMeshVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="true"
             android:foregroundServiceType="dataSync">
