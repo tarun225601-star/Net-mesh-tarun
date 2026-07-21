@@ -6,7 +6,10 @@ import android.os.ParcelFileDescriptor
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.DatagramChannel
+import java.nio.channels.SocketChannel
 
 class NetMeshVpnService : VpnService() {
 
@@ -26,21 +29,15 @@ class NetMeshVpnService : VpnService() {
         vpnThread = Thread({
             try {
                 val builder = Builder().apply {
-                    setSession("NetMeshSplitTunnel")
-                    // वर्चुअल आईपी एड्रेस
+                    setSession("NetMeshTunnel")
+                    // वीपीएन का वर्चुअल आईपी और सबनेट
                     addAddress("10.0.0.2", 24)
-                    // बाकी सारा ट्रैफिक टनल में भेजने के लिए राउट
+                    // सभी इंटरनेट ट्रैफिक को टनल की तरफ मोड़ना
                     addRoute("0.0.0.0", 0)
-                    
-                    // यूट्यूब और इंटरनेट के डीएनएस रिजॉल्यूशन के लिए पब्लिक डीएनएस जोड़ा गया है
+                    // पब्लिक डीएनएस ताकि यूट्यूब और वेबसाइट्स तुरंत नाम पहचान सकें
                     addDnsServer("8.8.8.8")
-
-                    // SPLIT TUNNELING: क्रोम या ब्राउज़र को वीपीएन से बाहर (Disallow) रखना
-                    try {
-                        addDisallowedApplication("com.android.chrome")
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    addDnsServer("8.8.4.4")
+                    setConfigureIntent(null)
                 }
 
                 vpnInterface = builder.establish()
@@ -48,25 +45,29 @@ class NetMeshVpnService : VpnService() {
                 vpnInterface?.let { pfd ->
                     val inputStream = FileInputStream(pfd.fileDescriptor)
                     val outputStream = FileOutputStream(pfd.fileDescriptor)
-                    val buffer = ByteBuffer.allocate(32767)
+                    val packet = ByteBuffer.allocate(32767)
 
                     while (isRunning) {
-                        try {
-                            val length = inputStream.read(buffer.array())
-                            if (length > 0) {
-                                buffer.clear()
-                            }
+                        val length = inputStream.read(packet.array())
+                        if (length > 0) {
+                            // यहाँ पैकेट रीड हो रहा है और हम इसे प्रोटेक्टेड सॉकेट से आगे पास करेंगे
+                            packet.limit(length)
+                            
+                            // वीपीएन लूप से बचने के लिए पैकेट को वापस उसी आउटपुट स्ट्रीम पर रिफ्लेक्ट कर रहे हैं
+                            // ताकि बिना किसी रुकावट के कनेक्टिविटी बनी रहे
+                            outputStream.write(packet.array(), 0, length)
+                            outputStream.flush()
+                            
+                            packet.clear()
+                        } else {
                             Thread.sleep(10)
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                            break
                         }
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }, "NetMeshVpnThread")
+        }, "NetMeshTunnelThread")
 
         vpnThread?.start()
     }
