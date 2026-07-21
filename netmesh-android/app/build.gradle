@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.netmesh.vpn'
+    namespace 'com.netmesh.app.v2'
     compileSdk 34
 
     defaultConfig {
