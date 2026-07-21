@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.netmesh.app.v2'
-    compileSdk 33 // Android 11 के लिए
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.netmesh.app.v2"
         minSdk 26
-        targetSdk 33 // Android 11 के लिए
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -33,8 +33,8 @@ android {
 }
 
 dependencies {
-    // WebRTC लाइब्रेरी (जो एरर दे रही थी)
-    implementation 'org.webrtc:google-webrtc:1.0.32006'
+    // यह वाला WebRTC वर्ज़न सीधा Maven Central से बिना किसी एरर के डाउनलोड हो जाएगा
+    implementation 'org.webrtc:google-webrtc:1.0.30039'
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
