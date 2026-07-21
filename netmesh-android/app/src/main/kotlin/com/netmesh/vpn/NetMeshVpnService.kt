@@ -1,4 +1,4 @@
-package com.netmesh.vpn
+package com.netmesh.app.v2
 
 import android.content.Intent
 import android.net.VpnService
@@ -10,7 +10,6 @@ class NetMeshVpnService : VpnService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val builder = Builder()
         
-        // VPN कॉन्फ़िगरेशन
         vpnInterface = builder.setSession("NetMeshVPN")
             .addAddress("10.0.0.2", 24)
             .addDnsServer("8.8.8.8")
