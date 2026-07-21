@@ -29,11 +29,13 @@ class NetMeshVpnService : VpnService() {
                     setSession("NetMeshSplitTunnel")
                     // वर्चुअल आईपी एड्रेस
                     addAddress("10.0.0.2", 24)
-                    // बाकी सारा ट्रैफिक टनल में भेजने के लिए रूट
+                    // बाकी सारा ट्रैफिक टनल में भेजने के लिए राउट
                     addRoute("0.0.0.0", 0)
+                    
+                    // यूट्यूब और इंटरनेट के डीएनएस रिजॉल्यूशन के लिए पब्लिक डीएनएस जोड़ा गया है
+                    addDnsServer("8.8.8.8")
 
-                    // SPLIT TUNNELING: क्रोम या ब्राउज़र जिसमें वेबसाइट चल रही है, 
-                    // उसे वीपीएन से बाहर (Disallow) रखते हैं ताकि वह डायरेक्ट मोबाइल नेट से चले और कभी क्रैश/स्लीप न हो।
+                    // SPLIT TUNNELING: क्रोम या ब्राउज़र को वीपीएन से बाहर (Disallow) रखना
                     try {
                         addDisallowedApplication("com.android.chrome")
                     } catch (e: Exception) {
@@ -45,6 +47,7 @@ class NetMeshVpnService : VpnService() {
 
                 vpnInterface?.let { pfd ->
                     val inputStream = FileInputStream(pfd.fileDescriptor)
+                    val outputStream = FileOutputStream(pfd.fileDescriptor)
                     val buffer = ByteBuffer.allocate(32767)
 
                     while (isRunning) {
@@ -52,36 +55,31 @@ class NetMeshVpnService : VpnService() {
                             val length = inputStream.read(buffer.array())
                             if (length > 0) {
                                 buffer.clear()
-                            } else {
-                                Thread.sleep(10)
                             }
+                            Thread.sleep(10)
                         } catch (e: IOException) {
+                            e.printStackTrace()
                             break
                         }
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-            } finally {
-                cleanup()
             }
         }, "NetMeshVpnThread")
+
         vpnThread?.start()
     }
 
-    private fun cleanup() {
-        try {
-            vpnInterface?.close()
-        } catch (e: Exception) {
-        }
-        vpnInterface = null
-        isRunning = false
-    }
-
     override fun onDestroy() {
+        super.onDestroy()
         isRunning = false
         vpnThread?.interrupt()
-        cleanup()
-        super.onDestroy()
+        try {
+            vpnInterface?.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        vpnInterface = null
     }
 }
